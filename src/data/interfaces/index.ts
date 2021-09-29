@@ -1,0 +1,1 @@
+export { IGear } from "./IGear";

@@ -1,11 +1,5 @@
 import { Dexie } from "dexie";
-
-export interface IGear {
-  id?: number;
-  item_name: string;
-  manufacturer?: string;
-  weight: number;
-}
+import { IGear } from "./interfaces";
 
 class OutdoorToolkitDB extends Dexie {
   gear: Dexie.Table<IGear, number>;
