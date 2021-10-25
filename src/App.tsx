@@ -1,10 +1,12 @@
-import { AppBar, Toolbar, Typography, Container, Card } from "@mui/material";
-import { view } from "@risingstack/react-easy-state";
 import React from "react";
-import { GearStore } from "./stores/gearStore";
-import { GearTable } from "./components/gearTable";
+import { AppBar, Toolbar, Typography, Container, Card } from "@mui/material";
+import { observer } from "mobx-react-lite";
+import GearTable from "./components/gearTable";
+import { useStores } from "./stores";
 
 function App() {
+  const { GearStore } = useStores();
+
   React.useEffect(() => {
     GearStore.getAll();
   }, []);
@@ -15,13 +17,14 @@ function App() {
         display: "flex",
         height: "100%",
         flexDirection: "column",
-        background: "hsl(0 0% 95%)",
+        background: "#FAF8F4",
       }}
     >
       <AppBar
         position="static"
+        elevation={0}
         style={{
-          background: "hsl(0 0% 27%)",
+          background: "#000",
           color: "white",
           marginBottom: 40,
         }}
@@ -32,12 +35,10 @@ function App() {
       </AppBar>
 
       <Container>
-        <Card style={{ minHeight: 100 }}>
-          <GearTable />
-        </Card>
+        <GearTable />
       </Container>
     </section>
   );
 }
 
-export default view(App);
+export default observer(App);

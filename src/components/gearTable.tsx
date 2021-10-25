@@ -1,40 +1,24 @@
-import { Button, Typography } from "@mui/material";
-import { DataGrid, GridColDef, GridSelectionModel } from "@mui/x-data-grid";
-import { view } from "@risingstack/react-easy-state";
+import {
+  Button,
+  Checkbox,
+  Divider,
+  Table,
+  TableBody,
+  TableCell,
+  TableFooter,
+  TableHead,
+  TableRow,
+  Typography,
+} from "@mui/material";
+import { observer } from "mobx-react-lite";
 import React from "react";
-import { GearStore } from "../stores/gearStore";
-import { GearTableToolbar } from "./gearTableToolbar";
+import { useStores } from "../stores";
+import { EditableCell } from "./dataGrid/editableCell";
 
-const columns: GridColDef[] = [
-  {
-    field: "item_name",
-    headerName: "Item Name",
-    width: 350,
-    editable: true,
-  },
-  {
-    field: "weight",
-    headerName: "Weight",
-    width: 150,
-    editable: true,
-    align: "right",
-    type: "number",
-    description: `The weight of the current item.`,
-  },
-];
+const GearTable = () => {
+  const { GearStore } = useStores();
+  const [selectedRows, setSelectedRows] = React.useState<number[]>([]);
 
-function TableFooterComponent() {
-  return (
-    <div style={{ padding: 15 }}>
-      Total Weight: <strong>{GearStore.weightInPounds}</strong>
-    </div>
-  );
-}
-
-const GearTable = view(() => {
-  const [selectedRows, setSelectedRows] = React.useState<GridSelectionModel>(
-    []
-  );
   const addGear = async () => {
     await GearStore.add({
       item_name: "",
@@ -47,43 +31,110 @@ const GearTable = view(() => {
     selectedRows.forEach((id) => {
       GearStore.delete(id as number);
     });
+
+    setSelectedRows([]);
   };
 
   return (
     <>
       <div
         style={{
-          padding: 10,
+          marginBottom: 8,
           display: "flex",
           justifyContent: "space-between",
         }}
       >
-        <Typography variant="h5">Gear List</Typography>
-        <Button onClick={addGear}>Add Item</Button>
+        <div>
+          <Typography fontWeight={600} variant="h4">
+            Gear List
+          </Typography>
+          <Typography fontWeight={200} variant="h6">
+            A place to list out all your gear.
+          </Typography>
+        </div>
+
+        <div style={{ display: "flex", justifyContent: "center", alignItems: "center" }}>
+          <Button disableElevation variant="contained" onClick={addGear}>
+            Add Item
+          </Button>
+
+          <Button
+            style={{ marginLeft: 4 }}
+            variant="outlined"
+            disabled={selectedRows.length === 0}
+            onClick={removeRows}
+          >
+            Delete Selection
+          </Button>
+        </div>
       </div>
 
-      <DataGrid
-        rows={GearStore.items}
-        columns={columns}
-        pageSize={100}
-        components={{
-          Footer: TableFooterComponent,
-          Toolbar: () => (
-            <GearTableToolbar selection={selectedRows} onDelete={removeRows} />
-          ),
-        }}
-        onCellEditCommit={(params) => {
-          GearStore.updateById(params.id as number, params.field, params.value);
-        }}
-        onSelectionModelChange={(selectionModel) =>
-          setSelectedRows(selectionModel)
-        }
-        autoHeight
-        checkboxSelection
-        disableSelectionOnClick
-      />
+      <Divider style={{ marginTop: 8 }} />
+
+      <Table>
+        <TableHead>
+          <TableRow>
+            <TableCell width="5%"></TableCell>
+            <TableCell width="50%">Item</TableCell>
+            <TableCell width="20%">Weight</TableCell>
+            <TableCell width="25%">Manufacturer</TableCell>
+          </TableRow>
+        </TableHead>
+        <TableBody>
+          {GearStore.items.length === 0 && (
+            <TableRow>
+              <TableCell colSpan={4} align="center">
+                <Typography>Empty</Typography>
+              </TableCell>
+            </TableRow>
+          )}
+
+          {GearStore.items.map((item) => {
+            const isSelected = selectedRows.includes(item.id);
+
+            return (
+              <TableRow key={item.id}>
+                <TableCell>
+                  <Checkbox
+                    checked={isSelected}
+                    onChange={() => {
+                      if (isSelected) {
+                        setSelectedRows(selectedRows.filter((id) => id !== item.id));
+                      } else {
+                        setSelectedRows([...selectedRows, item.id]);
+                      }
+                    }}
+                  />
+                </TableCell>
+                <EditableCell
+                  placeholder="Enter item's name here."
+                  onChange={(e) => GearStore.updateById(item.id, "item_name", e.currentTarget.value)}
+                >
+                  {item.item_name}
+                </EditableCell>
+
+                <EditableCell
+                  type="number"
+                  placeholder="Enter item's weight here."
+                  onChange={(e) => GearStore.updateById(item.id, "weight", e.currentTarget.value)}
+                >
+                  {item.weight}
+                </EditableCell>
+                <TableCell>{item.manufacturer}</TableCell>
+              </TableRow>
+            );
+          })}
+        </TableBody>
+        <TableFooter>
+          <TableRow>
+            <TableCell colSpan={4}>
+              Total Weight: <strong>{GearStore.weightInPounds}</strong>
+            </TableCell>
+          </TableRow>
+        </TableFooter>
+      </Table>
     </>
   );
-});
+};
 
-export { GearTable };
+export default observer(GearTable);
