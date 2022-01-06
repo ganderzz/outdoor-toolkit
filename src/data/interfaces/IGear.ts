@@ -1,6 +1,7 @@
 export interface IGear {
   id?: number;
-  item_name: string;
+  created_at: string;
+  name: string;
   manufacturer?: string;
   weight: number;
   weight_measurement: "g" | "lbs";

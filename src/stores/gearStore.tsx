@@ -1,12 +1,13 @@
 import { makeAutoObservable } from "mobx";
-import { db } from "../data/db";
 import { IGear } from "../data/interfaces";
+import { supabase } from "../data/supabase";
 
 /**
  * Contains all Gear logic and data.
  */
 class GearStore {
   items: IGear[] = [];
+  isLoading = false;
   weightType: "lbs" | "g" = "g";
 
   constructor() {
@@ -42,16 +43,25 @@ class GearStore {
    * Gets all gear from the database.
    */
   async getAll() {
-    this.items = await db.gear.toArray();
+    this.isLoading = true;
+
+    const { data } = await supabase.from<IGear>("gear").select().order("created_at");
+
+    this.items = data;
+    this.isLoading = false;
   }
 
   /**
    * Adds a new gear item into the database, then refreshes the local items list.
    */
   async add(item: IGear) {
-    await db.gear.add(item);
+    const response = await supabase.from<IGear>("gear").insert({ name: item.name, weight: item.weight });
 
-    await this.getAll();
+    if (response.error) {
+      throw response.error;
+    }
+
+    this.items = [...this.items, response.data[0]];
   }
 
   /**
@@ -60,9 +70,16 @@ class GearStore {
    */
   async updateById(id: number, field: string, value: any) {
     try {
-      await db.gear.update(id, { [field]: value });
+      const item = this.items.find((p) => p.id === id);
 
-      await this.getAll();
+      const { data } = await supabase.from<IGear>("gear").upsert({ ...item, [field]: value });
+      this.items = this.items.map((p) => {
+        if (p.id === data[0].id) {
+          return data[0];
+        }
+
+        return p;
+      });
     } catch (error) {
       console.error(error);
     }
@@ -72,9 +89,9 @@ class GearStore {
    * Deletes a gear item by id, then refreshes the local items list.
    */
   async delete(id: number) {
-    await db.gear.delete(id);
+    await supabase.from<IGear>("gear").delete({ returning: "minimal" }).eq("id", id);
 
-    await this.getAll();
+    this.items = this.items.filter((p) => p.id !== id);
   }
 }
 

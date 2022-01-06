@@ -2,6 +2,7 @@ import {
   Button,
   Checkbox,
   Divider,
+  Skeleton,
   Table,
   TableBody,
   TableCell,
@@ -19,9 +20,14 @@ const GearTable = () => {
   const { GearStore } = useStores();
   const [selectedRows, setSelectedRows] = React.useState<number[]>([]);
 
+  React.useEffect(() => {
+    GearStore.getAll();
+  }, []);
+
   const addGear = async () => {
     await GearStore.add({
-      item_name: "",
+      name: "",
+      created_at: new Date().toUTCString(),
       weight: 0.0,
       weight_measurement: "g",
     });
@@ -81,7 +87,7 @@ const GearTable = () => {
           </TableRow>
         </TableHead>
         <TableBody>
-          {GearStore.items.length === 0 && (
+          {!GearStore.isLoading && GearStore.items.length === 0 && (
             <TableRow>
               <TableCell colSpan={4} align="center">
                 <Typography>Empty</Typography>
@@ -89,41 +95,58 @@ const GearTable = () => {
             </TableRow>
           )}
 
-          {GearStore.items.map((item) => {
-            const isSelected = selectedRows.includes(item.id);
+          {GearStore.isLoading ? (
+            <TableRow>
+              <TableCell>
+                <Skeleton variant="text" animation="wave" />
+              </TableCell>
+              <TableCell>
+                <Skeleton variant="text" animation="wave" />
+              </TableCell>
+              <TableCell>
+                <Skeleton variant="text" animation="wave" />
+              </TableCell>
+              <TableCell>
+                <Skeleton variant="text" animation="wave" />
+              </TableCell>
+            </TableRow>
+          ) : (
+            GearStore.items.map((item) => {
+              const isSelected = selectedRows.includes(item.id);
 
-            return (
-              <TableRow key={item.id}>
-                <TableCell>
-                  <Checkbox
-                    checked={isSelected}
-                    onChange={() => {
-                      if (isSelected) {
-                        setSelectedRows(selectedRows.filter((id) => id !== item.id));
-                      } else {
-                        setSelectedRows([...selectedRows, item.id]);
-                      }
-                    }}
-                  />
-                </TableCell>
-                <EditableCell
-                  placeholder="Enter item's name here."
-                  onChange={(e) => GearStore.updateById(item.id, "item_name", e.currentTarget.value)}
-                >
-                  {item.item_name}
-                </EditableCell>
+              return (
+                <TableRow key={item.id}>
+                  <TableCell>
+                    <Checkbox
+                      checked={isSelected}
+                      onChange={() => {
+                        if (isSelected) {
+                          setSelectedRows(selectedRows.filter((id) => id !== item.id));
+                        } else {
+                          setSelectedRows([...selectedRows, item.id]);
+                        }
+                      }}
+                    />
+                  </TableCell>
+                  <EditableCell
+                    placeholder="Enter item's name here."
+                    onChange={(e) => GearStore.updateById(item.id, "name", e.currentTarget.value)}
+                  >
+                    {item.name}
+                  </EditableCell>
 
-                <EditableCell
-                  type="number"
-                  placeholder="Enter item's weight here."
-                  onChange={(e) => GearStore.updateById(item.id, "weight", e.currentTarget.value)}
-                >
-                  {item.weight}
-                </EditableCell>
-                <TableCell>{item.manufacturer}</TableCell>
-              </TableRow>
-            );
-          })}
+                  <EditableCell
+                    type="number"
+                    placeholder="Enter item's weight here."
+                    onChange={(e) => GearStore.updateById(item.id, "weight", e.currentTarget.value)}
+                  >
+                    {item.weight}
+                  </EditableCell>
+                  <TableCell>{item.manufacturer}</TableCell>
+                </TableRow>
+              );
+            })
+          )}
         </TableBody>
         <TableFooter>
           <TableRow>
