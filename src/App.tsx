@@ -1,5 +1,5 @@
 import React from "react";
-import { AppBar, Toolbar, Typography, Container, Button } from "@mui/material";
+import { AppBar, Toolbar, Typography, Container, Button, Box } from "@mui/material";
 import { observer } from "mobx-react-lite";
 import { useStores } from "./stores";
 import { supabase } from "./data/supabase";
@@ -8,6 +8,7 @@ import { Login } from "./pages/login";
 import { RequireAuth } from "./components/auth/requireAuth";
 import { MyGearPage } from "./pages/myGear";
 import { Register } from "./pages/register";
+import { NavItem } from "./components/navItem/navItem";
 
 function App() {
   const [session, setSession] = React.useState(null);
@@ -40,15 +41,20 @@ function App() {
           position="static"
           elevation={0}
           style={{
-            background: "#000",
+            background: "#111",
             color: "white",
             marginBottom: 40,
           }}
         >
           <Toolbar>
-            <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
+            <Typography variant="h6" component="div" sx={{ marginRight: 8 }}>
               Outdoor Toolkit
             </Typography>
+
+            <Box sx={{ flexGrow: 1, display: "flex", height: "100%" }}>
+              <NavItem to="/">My Gear</NavItem>
+              <NavItem to="/test">Test</NavItem>
+            </Box>
 
             {!session ? (
               <Button color="inherit" component={Link} to="/login">

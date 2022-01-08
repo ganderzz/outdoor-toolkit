@@ -1,6 +1,7 @@
 import { makeAutoObservable } from "mobx";
 import { IGear } from "../data/interfaces";
 import { supabase } from "../data/supabase";
+import { debounce } from "../utils/debounce";
 
 /**
  * Contains all Gear logic and data.
@@ -47,7 +48,7 @@ class GearStore {
 
     const { data } = await supabase
       .from<IGear>("gear")
-      .select()
+      .select("id, name, weight, user_id, manufacturer(id, name)")
       .order("created_at");
 
     this.items = data;
@@ -58,7 +59,6 @@ class GearStore {
    * Adds a new gear item into the database, then refreshes the local items list.
    */
   async add(item: IGear) {
-    console.log(supabase.auth.user().id);
     const response = await supabase.from<IGear>("gear").insert({
       name: item.name,
       weight: item.weight,
@@ -78,20 +78,22 @@ class GearStore {
    */
   async updateById(id: number, field: string, value: any) {
     try {
-      const item = this.items.find((p) => p.id === id);
-
-      const { data } = await supabase
-        .from<IGear>("gear")
-        .upsert({ ...item, [field]: value });
-      this.items = this.items.map((p) => {
-        if (p.id === data[0].id) {
-          return data[0];
+      // Optimistically update the UI.
+      this.items = this.items.map((item) => {
+        if (item.id === id) {
+          return { ...item, [field]: value };
         }
 
-        return p;
+        return item;
       });
+
+      debounce(async () => {
+        const item = this.items.find((item) => item.id === id);
+
+        await supabase.from<IGear>("gear").update({ id: item.id, [field]: value }, { returning: "minimal" });
+      }, 500);
     } catch (error) {
-      console.error(error);
+      throw error;
     }
   }
 
@@ -99,10 +101,7 @@ class GearStore {
    * Deletes a gear item by id, then refreshes the local items list.
    */
   async delete(id: number) {
-    await supabase
-      .from<IGear>("gear")
-      .delete({ returning: "minimal" })
-      .eq("id", id);
+    await supabase.from<IGear>("gear").delete({ returning: "minimal" }).eq("id", id);
 
     this.items = this.items.filter((p) => p.id !== id);
   }

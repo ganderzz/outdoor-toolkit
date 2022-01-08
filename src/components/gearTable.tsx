@@ -1,4 +1,5 @@
 import {
+  Autocomplete,
   Button,
   Checkbox,
   Divider,
@@ -9,11 +10,14 @@ import {
   TableFooter,
   TableHead,
   TableRow,
+  TextField,
   Typography,
 } from "@mui/material";
 import { observer } from "mobx-react-lite";
 import React from "react";
+import { supabase } from "../data/supabase";
 import { useStores } from "../stores";
+import { AsyncSelect } from "./asyncSelect";
 import { EditableCell } from "./dataGrid/editableCell";
 
 const GearTable = () => {
@@ -50,15 +54,6 @@ const GearTable = () => {
           justifyContent: "space-between",
         }}
       >
-        <div>
-          <Typography fontWeight={600} variant="h4">
-            Gear List
-          </Typography>
-          <Typography fontWeight={200} variant="h6">
-            A place to list out all your gear.
-          </Typography>
-        </div>
-
         <div style={{ display: "flex", justifyContent: "center", alignItems: "center" }}>
           <Button disableElevation variant="contained" onClick={addGear}>
             Add Item
@@ -82,7 +77,7 @@ const GearTable = () => {
           <TableRow>
             <TableCell width="5%"></TableCell>
             <TableCell width="50%">Item</TableCell>
-            <TableCell width="20%">Weight</TableCell>
+            <TableCell width="20%">Weight (oz)</TableCell>
             <TableCell width="25%">Manufacturer</TableCell>
           </TableRow>
         </TableHead>
@@ -142,7 +137,17 @@ const GearTable = () => {
                   >
                     {item.weight}
                   </EditableCell>
-                  <TableCell>{item.manufacturer}</TableCell>
+                  <TableCell>
+                    <AsyncSelect
+                      value={item.manufacturer}
+                      onChange={(_, val) => GearStore.updateById(item.id, "manufacturer_id", val?.id ?? null)}
+                      onLoad={async () => {
+                        const { data } = await supabase.from("manufacturer").select();
+
+                        return data;
+                      }}
+                    />
+                  </TableCell>
                 </TableRow>
               );
             })

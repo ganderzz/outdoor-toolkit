@@ -5,4 +5,5 @@ export interface IGear {
   manufacturer?: string;
   weight: number;
   weight_measurement: "g" | "lbs";
+  user_id: string;
 }

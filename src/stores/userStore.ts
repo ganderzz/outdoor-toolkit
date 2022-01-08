@@ -6,9 +6,7 @@ import { supabase } from "../data/supabase";
  * Contains all Gear logic and data.
  */
 class UserStore {
-  items: IGear[] = [];
-  isLoading = false;
-  weightType: "lbs" | "g" = "g";
+  session;
 
   constructor() {
     makeAutoObservable(this);
