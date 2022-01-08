@@ -4,16 +4,21 @@ import { Navigate, useNavigate } from "react-router";
 import { Link } from "react-router-dom";
 import { supabase } from "../data/supabase";
 
-export const Login = () => {
+export const Register = () => {
   const navigate = useNavigate();
   const [error, setError] = React.useState<string | null>(null);
 
-  const handleLogin = async (e) => {
+  const handleRegister = async (e) => {
     e.preventDefault();
 
     const data = new FormData(e.currentTarget);
 
-    const response = await supabase.auth.signIn({
+    if (data.get("password") !== data.get("password-again")) {
+      setError("Passwords do not match.");
+      return;
+    }
+
+    const response = await supabase.auth.signUp({
       email: data.get("email") as string,
       password: data.get("password") as string,
     });
@@ -30,7 +35,7 @@ export const Login = () => {
   }
 
   return (
-    <form style={{ margin: "0 auto", maxWidth: 400 }} onSubmit={handleLogin}>
+    <form style={{ margin: "0 auto", maxWidth: 400 }} onSubmit={handleRegister}>
       <Stack spacing={1}>
         {error && (
           <Alert color="error" variant="outlined">
@@ -50,16 +55,14 @@ export const Login = () => {
           name="password"
           placeholder="Password"
         />
-        <Button variant="contained" color="primary" type="submit">
-          Sign in
-        </Button>
-
-        <Button
-          component={Link}
-          to="/register"
+        <TextField
           variant="outlined"
-          color="primary"
-        >
+          type="password"
+          name="password-again"
+          placeholder="Password Again"
+        />
+
+        <Button variant="contained" color="primary" type="submit">
           Register
         </Button>
       </Stack>

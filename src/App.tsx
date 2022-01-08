@@ -1,12 +1,13 @@
 import React from "react";
 import { AppBar, Toolbar, Typography, Container, Button } from "@mui/material";
 import { observer } from "mobx-react-lite";
-import GearTable from "./components/gearTable";
 import { useStores } from "./stores";
 import { supabase } from "./data/supabase";
 import { BrowserRouter, Link, Route, Routes } from "react-router-dom";
 import { Login } from "./pages/login";
 import { RequireAuth } from "./components/auth/requireAuth";
+import { MyGearPage } from "./pages/myGear";
+import { Register } from "./pages/register";
 
 function App() {
   const [session, setSession] = React.useState(null);
@@ -16,11 +17,6 @@ function App() {
     setSession(supabase.auth.session());
     supabase.auth.onAuthStateChange((_event, session) => setSession(session));
   }, []);
-
-  const signIn = async () => {
-    const data = await supabase.auth.signIn({ email: "stolen3@gmail.com" }, { redirectTo: "/" });
-    console.log(data);
-  };
 
   const signOut = async () => {
     const { error } = await supabase.auth.signOut();
@@ -72,10 +68,11 @@ function App() {
               path="/"
               element={
                 <RequireAuth>
-                  <GearTable />
+                  <MyGearPage />
                 </RequireAuth>
               }
             />
+            <Route path="/register" element={<Register />} />
             <Route path="/login" element={<Login />} />
           </Routes>
         </Container>

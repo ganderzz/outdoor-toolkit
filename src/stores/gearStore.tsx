@@ -45,7 +45,10 @@ class GearStore {
   async getAll() {
     this.isLoading = true;
 
-    const { data } = await supabase.from<IGear>("gear").select().order("created_at");
+    const { data } = await supabase
+      .from<IGear>("gear")
+      .select()
+      .order("created_at");
 
     this.items = data;
     this.isLoading = false;
@@ -55,7 +58,12 @@ class GearStore {
    * Adds a new gear item into the database, then refreshes the local items list.
    */
   async add(item: IGear) {
-    const response = await supabase.from<IGear>("gear").insert({ name: item.name, weight: item.weight });
+    console.log(supabase.auth.user().id);
+    const response = await supabase.from<IGear>("gear").insert({
+      name: item.name,
+      weight: item.weight,
+      user_id: supabase.auth.user().id,
+    });
 
     if (response.error) {
       throw response.error;
@@ -72,7 +80,9 @@ class GearStore {
     try {
       const item = this.items.find((p) => p.id === id);
 
-      const { data } = await supabase.from<IGear>("gear").upsert({ ...item, [field]: value });
+      const { data } = await supabase
+        .from<IGear>("gear")
+        .upsert({ ...item, [field]: value });
       this.items = this.items.map((p) => {
         if (p.id === data[0].id) {
           return data[0];
@@ -89,7 +99,10 @@ class GearStore {
    * Deletes a gear item by id, then refreshes the local items list.
    */
   async delete(id: number) {
-    await supabase.from<IGear>("gear").delete({ returning: "minimal" }).eq("id", id);
+    await supabase
+      .from<IGear>("gear")
+      .delete({ returning: "minimal" })
+      .eq("id", id);
 
     this.items = this.items.filter((p) => p.id !== id);
   }
